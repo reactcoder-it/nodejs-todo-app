@@ -9,12 +9,6 @@ var todoSchema = new mongoose.Schema({
 
 var Todo = mongoose.model('Todo', todoSchema);
 
-// var data = [
-//     { item: 'Купить спички' },
-//     { item: 'Погулять с собакой' },
-//     { item: 'Позвонить Пашке' }
-// ];
-
 var urlencodedParser = bodyParser.urlencoded({extended: false});
 
 module.exports = function (app) {
@@ -26,18 +20,27 @@ module.exports = function (app) {
             if (err) throw err;
             res.render('todo', { todos: data });
         });
+
     });
 
     app.post('/todo', urlencodedParser, function (req, res) {
-        data.push(req.body);
-        res.json(data);
+
+        // Получаем данные с формы и записываем их в БД
+        var newTodo = new Todo(req.body);
+        newTodo.save(function (err, data) {
+            if (err) throw err;
+            res.json(data);
+        });
+
     });
 
     app.delete('/todo/:item', function (req, res) {
-        data = data.filter(function (todo) {
-            return todo.item.replace(/ /g, '-') !== req.params.item;
+
+        // Удаляем соответствующую запись в mongoDB
+        Todo.find({ item: req.params.item.replace(/\-/g, " ") }).remove(function (err, data) {
+            if (err) throw err;
+            res.json(data);
         });
-        res.json(data);
     });
 
 };
